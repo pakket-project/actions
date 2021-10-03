@@ -85,7 +85,8 @@ async function run(): Promise<void> {
 
         const outputDir = join(GH_WORKSPACE, 'temp', `${pkg}-${version}`)
 
-        await exec('pakket-builder', [
+        await exec('sudo', [
+          'pakket-builder',
           'build',
           join(GH_WORKSPACE, 'packages', pkg),
           version,
@@ -103,6 +104,8 @@ async function run(): Promise<void> {
         await git.addConfig('user.email', 'bot@pakket.sh')
         await git.addConfig('user.name', 'Pakket Bot')
 
+        await git.fetch()
+        await git.pull()
         await git.add('.')
         await git.commit(`Add checksum for ${pkg} (${version}, ${arch})`)
         await git.push()

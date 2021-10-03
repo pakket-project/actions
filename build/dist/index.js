@@ -108,7 +108,8 @@ function run() {
                     pkg = pathRegex[2];
                     version = pathRegex[3];
                     const outputDir = path_1.join(GH_WORKSPACE, 'temp', `${pkg}-${version}`);
-                    yield exec('pakket-builder', [
+                    yield exec('sudo', [
+                        'pakket-builder',
                         'build',
                         path_1.join(GH_WORKSPACE, 'packages', pkg),
                         version,
@@ -124,6 +125,8 @@ function run() {
                     }
                     yield git.addConfig('user.email', 'bot@pakket.sh');
                     yield git.addConfig('user.name', 'Pakket Bot');
+                    yield git.fetch();
+                    yield git.pull();
                     yield git.add('.');
                     yield git.commit(`Add checksum for ${pkg} (${version}, ${arch})`);
                     yield git.push();
