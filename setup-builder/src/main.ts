@@ -1,25 +1,34 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as core from '@actions/core'
 import * as tc from '@actions/tool-cache'
+import * as exec from '@actions/exec'
 import {join} from 'path'
 
 const version = '0.0.1'
 
+let silicon = false
+let arch = ''
+
+async function needsArmFlag(): Promise<boolean> {
+  const uname = await exec.getExecOutput(`uname`, ['-m'])
+  const isArm = uname.stdout === 'arm64'
+  let isM1 = false
+  try {
+    // this command will only succeed on m1 macs.
+    await exec.exec('arch', ['-arm64', 'echo', 'hi'])
+    isM1 = true
+  } catch (err) {
+    // Must not be an m1 mac
+  }
+  return isM1 && !isArm
+}
+
 async function get(): Promise<string> {
-  const toolPath = tc.find('pakket-builder', version)
+  const toolPath = tc.find('pakket-builder', version, arch)
   // found in cache
   if (toolPath) {
     core.info(`Found in cache @ ${toolPath}`)
     return toolPath
-  }
-
-  let arch = ''
-  if (process.arch === 'x64') {
-    arch = 'intel'
-  } else if (process.arch === 'arm64') {
-    arch = 'silicon'
-  } else {
-    core.setFailed('unsupported architecture')
   }
 
   const url = `https://core.pakket.sh/pakket-builder/pakket-builder-${arch}-${version}.tar.xz`
@@ -28,7 +37,7 @@ async function get(): Promise<string> {
   const downloadPath = await tc.downloadTool(url)
   const dest = await tc.extractTar(downloadPath)
 
-  const cachedDir = await tc.cacheDir(dest, 'pakket-builder', version)
+  const cachedDir = await tc.cacheDir(dest, 'pakket-builder', version, arch)
   core.info(`Successfully cached pakket-builder to ${cachedDir}`)
 
   return cachedDir
@@ -36,6 +45,14 @@ async function get(): Promise<string> {
 
 async function run(): Promise<void> {
   try {
+    silicon = await needsArmFlag()
+
+    if (!silicon) {
+      arch = 'intel'
+    } else {
+      arch = 'silicon'
+    }
+
     // get pakket-builder
     const path = await get()
 

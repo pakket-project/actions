@@ -38,31 +38,40 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const core = __importStar(__nccwpck_require__(186));
 const tc = __importStar(__nccwpck_require__(784));
+const exec = __importStar(__nccwpck_require__(514));
 const path_1 = __nccwpck_require__(622);
 const version = '0.0.1';
+let silicon = false;
+let arch = '';
+function needsArmFlag() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const uname = yield exec.getExecOutput(`uname`, ['-m']);
+        const isArm = uname.stdout === 'arm64';
+        let isM1 = false;
+        try {
+            // this command will only succeed on m1 macs.
+            yield exec.exec('arch', ['-arm64', 'echo', 'hi']);
+            isM1 = true;
+        }
+        catch (err) {
+            // Must not be an m1 mac
+        }
+        return isM1 && !isArm;
+    });
+}
 function get() {
     return __awaiter(this, void 0, void 0, function* () {
-        const toolPath = tc.find('pakket-builder', version);
+        const toolPath = tc.find('pakket-builder', version, arch);
         // found in cache
         if (toolPath) {
             core.info(`Found in cache @ ${toolPath}`);
             return toolPath;
         }
-        let arch = '';
-        if (process.arch === 'x64') {
-            arch = 'intel';
-        }
-        else if (process.arch === 'arm64') {
-            arch = 'silicon';
-        }
-        else {
-            core.setFailed('unsupported architecture');
-        }
         const url = `https://core.pakket.sh/pakket-builder/pakket-builder-${arch}-${version}.tar.xz`;
         core.info(`Downloading ${arch} version of pakket-builder from ${url}`);
         const downloadPath = yield tc.downloadTool(url);
         const dest = yield tc.extractTar(downloadPath);
-        const cachedDir = yield tc.cacheDir(dest, 'pakket-builder', version);
+        const cachedDir = yield tc.cacheDir(dest, 'pakket-builder', version, arch);
         core.info(`Successfully cached pakket-builder to ${cachedDir}`);
         return cachedDir;
     });
@@ -70,6 +79,13 @@ function get() {
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            silicon = yield needsArmFlag();
+            if (!silicon) {
+                arch = 'intel';
+            }
+            else {
+                arch = 'silicon';
+            }
             // get pakket-builder
             const path = yield get();
             // add to path
