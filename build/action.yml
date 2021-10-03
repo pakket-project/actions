@@ -1,6 +1,13 @@
-name: 'Setup pakket-builder'
-description: 'Install pakket-builder'
+name: 'Build package'
+description: 'Build a package with pakket-builder'
 author: 'pakket-project'
+inputs:
+  PR:
+    description: 'PR number'
+    required: true
+  GH_TOKEN:
+    required: true
+
 runs:
   using: 'node12'
   main: 'dist/index.js'
