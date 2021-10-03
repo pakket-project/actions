@@ -44,6 +44,8 @@ async function run(): Promise<void> {
     const GH_WORKSPACE = process.env.GITHUB_WORKSPACE as string
     const repository = 'core'
 
+    process.env.HOME = GH_WORKSPACE
+
     const octokit = github.getOctokit(core.getInput('GH_TOKEN'))
 
     const pull = await octokit.rest.pulls.get({
@@ -85,8 +87,7 @@ async function run(): Promise<void> {
 
         const outputDir = join(GH_WORKSPACE, 'temp', `${pkg}-${version}`)
 
-        await exec('sudo', [
-          'pakket-builder',
+        await exec('pakket-builder', [
           'build',
           join(GH_WORKSPACE, 'packages', pkg),
           version,

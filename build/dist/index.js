@@ -78,6 +78,7 @@ function run() {
             const PR = core.getInput('PR', { required: true });
             const GH_WORKSPACE = process.env.GITHUB_WORKSPACE;
             const repository = 'core';
+            process.env.HOME = GH_WORKSPACE;
             const octokit = github.getOctokit(core.getInput('GH_TOKEN'));
             const pull = yield octokit.rest.pulls.get({
                 owner: 'pakket-project',
@@ -108,8 +109,7 @@ function run() {
                     pkg = pathRegex[2];
                     version = pathRegex[3];
                     const outputDir = path_1.join(GH_WORKSPACE, 'temp', `${pkg}-${version}`);
-                    yield exec('sudo', [
-                        'pakket-builder',
+                    yield exec('pakket-builder', [
                         'build',
                         path_1.join(GH_WORKSPACE, 'packages', pkg),
                         version,
