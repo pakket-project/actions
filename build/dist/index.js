@@ -127,7 +127,7 @@ function run() {
                     yield git.addConfig('user.name', 'Pakket Bot');
                     yield git.fetch();
                     yield git.pull();
-                    yield git.add('.');
+                    yield git.add('./packages');
                     yield git.commit(`Add checksum for ${pkg} (${version}, ${arch})`);
                     yield git.push();
                     core.info('Pushed checksum to repository');

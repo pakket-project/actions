@@ -107,7 +107,7 @@ async function run(): Promise<void> {
 
         await git.fetch()
         await git.pull()
-        await git.add('.')
+        await git.add('./packages')
         await git.commit(`Add checksum for ${pkg} (${version}, ${arch})`)
         await git.push()
         core.info('Pushed checksum to repository')
