@@ -33,7 +33,7 @@ async function get(): Promise<string> {
     return toolPath
   }
 
-  const url = `https://core.pakket.sh/pakket-builder/${version}/pakket-builder-${arch}-${version}.tar.xz`
+  const url = `https://core.pakket.sh/pakket-builder/${version}/pakket-builder-${version}-${arch}.tar.xz`
   core.info(`Downloading ${arch} version of pakket-builder from ${url}`)
 
   const downloadPath = await tc.downloadTool(url)
