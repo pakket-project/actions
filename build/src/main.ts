@@ -87,7 +87,8 @@ async function run(): Promise<void> {
 
         const outputDir = join(GH_WORKSPACE, 'temp', `${pkg}-${version}`)
 
-        await exec('pakket-builder', [
+        await exec('sudo', [
+          'pakket-builder',
           'build',
           join(GH_WORKSPACE, 'packages', pkg),
           version,
@@ -101,16 +102,6 @@ async function run(): Promise<void> {
         } else {
           arch = 'intel'
         }
-
-        await git.addConfig('user.email', 'bot@pakket.sh')
-        await git.addConfig('user.name', 'Pakket Bot')
-
-        await git.fetch()
-        await git.pull()
-        await git.add('./packages')
-        await git.commit(`Add checksum for ${pkg} (${version}, ${arch})`)
-        await git.push()
-        core.info('Pushed checksum to repository')
 
         const tarPath = join(outputDir, pkg, `${pkg}-${version}-${arch}.tar.xz`)
         const destDir = join(
@@ -128,6 +119,17 @@ async function run(): Promise<void> {
         } catch (err) {
           core.setFailed('Failed to upload the package to the mirror')
         }
+
+        await git.addConfig('user.email', 'bot@pakket.sh')
+        await git.addConfig('user.name', 'Pakket Bot')
+
+        await git.fetch()
+        await git.pull()
+        await git.add('./packages')
+        await git.commit(`Add checksum for ${pkg} (${version}, ${arch})`)
+        await git.pull()
+        await git.push()
+        core.info('Pushed checksum to repository')
       }
     }
   } catch (error: any) {

@@ -109,7 +109,8 @@ function run() {
                     pkg = pathRegex[2];
                     version = pathRegex[3];
                     const outputDir = path_1.join(GH_WORKSPACE, 'temp', `${pkg}-${version}`);
-                    yield exec('pakket-builder', [
+                    yield exec('sudo', [
+                        'pakket-builder',
                         'build',
                         path_1.join(GH_WORKSPACE, 'packages', pkg),
                         version,
@@ -123,14 +124,6 @@ function run() {
                     else {
                         arch = 'intel';
                     }
-                    yield git.addConfig('user.email', 'bot@pakket.sh');
-                    yield git.addConfig('user.name', 'Pakket Bot');
-                    yield git.fetch();
-                    yield git.pull();
-                    yield git.add('./packages');
-                    yield git.commit(`Add checksum for ${pkg} (${version}, ${arch})`);
-                    yield git.push();
-                    core.info('Pushed checksum to repository');
                     const tarPath = path_1.join(outputDir, pkg, `${pkg}-${version}-${arch}.tar.xz`);
                     const destDir = path_1.join('containers', 'caddy', 'core-packages', pkg, version);
                     try {
@@ -141,6 +134,15 @@ function run() {
                     catch (err) {
                         core.setFailed('Failed to upload the package to the mirror');
                     }
+                    yield git.addConfig('user.email', 'bot@pakket.sh');
+                    yield git.addConfig('user.name', 'Pakket Bot');
+                    yield git.fetch();
+                    yield git.pull();
+                    yield git.add('./packages');
+                    yield git.commit(`Add checksum for ${pkg} (${version}, ${arch})`);
+                    yield git.pull();
+                    yield git.push();
+                    core.info('Pushed checksum to repository');
                 }
             }
         }
