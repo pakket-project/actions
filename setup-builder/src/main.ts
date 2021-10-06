@@ -4,7 +4,7 @@ import * as tc from '@actions/tool-cache'
 import * as exec from '@actions/exec'
 import {join} from 'path'
 
-let version = '0.0.2'
+const defaultVersion = '0.0.2'
 
 let silicon = false
 let arch = ''
@@ -24,7 +24,7 @@ async function needsArmFlag(): Promise<boolean> {
 }
 
 async function get(): Promise<string> {
-  version = core.getInput('version') || version
+ const version = core.getInput('version') || defaultVersion
 
   const toolPath = tc.find('pakket-builder', version, arch)
   // found in cache

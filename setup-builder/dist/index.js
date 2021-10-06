@@ -40,7 +40,7 @@ const core = __importStar(__nccwpck_require__(186));
 const tc = __importStar(__nccwpck_require__(784));
 const exec = __importStar(__nccwpck_require__(514));
 const path_1 = __nccwpck_require__(622);
-let version = '0.0.2';
+const defaultVersion = '0.0.2';
 let silicon = false;
 let arch = '';
 function needsArmFlag() {
@@ -61,7 +61,7 @@ function needsArmFlag() {
 }
 function get() {
     return __awaiter(this, void 0, void 0, function* () {
-        version = core.getInput('version') || version;
+        const version = core.getInput('version') || defaultVersion;
         const toolPath = tc.find('pakket-builder', version, arch);
         // found in cache
         if (toolPath) {
