@@ -149,7 +149,7 @@ async function run(): Promise<void> {
         }
 
         await octokit.rest.issues.createComment({
-          body: `Successfully packaged and uploaded ${pkg} to the mirror.`,
+          body: `Successfully packaged and uploaded ${pkg} (for ${arch}) to the mirror.`,
           issue_number: (PR as unknown) as number,
           owner: 'pakket-project',
           repo: 'core'

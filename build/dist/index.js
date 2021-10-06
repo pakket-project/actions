@@ -161,7 +161,7 @@ function run() {
                         core.setFailed('Failed to push checksum to repository');
                     }
                     yield octokit.rest.issues.createComment({
-                        body: `Successfully packaged and uploaded ${pkg} to the mirror.`,
+                        body: `Successfully packaged and uploaded ${pkg} (for ${arch}) to the mirror.`,
                         issue_number: PR,
                         owner: 'pakket-project',
                         repo: 'core'
