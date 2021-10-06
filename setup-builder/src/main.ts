@@ -4,7 +4,7 @@ import * as tc from '@actions/tool-cache'
 import * as exec from '@actions/exec'
 import {join} from 'path'
 
-const version = '0.0.1'
+const version = '0.0.2'
 
 let silicon = false
 let arch = ''
@@ -31,7 +31,7 @@ async function get(): Promise<string> {
     return toolPath
   }
 
-  const url = `https://core.pakket.sh/pakket-builder/pakket-builder-${arch}-${version}.tar.xz`
+  const url = `https://core.pakket.sh/pakket-builder/${version}/pakket-builder-${arch}-${version}.tar.xz`
   core.info(`Downloading ${arch} version of pakket-builder from ${url}`)
 
   const downloadPath = await tc.downloadTool(url)

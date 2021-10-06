@@ -40,7 +40,7 @@ const core = __importStar(__nccwpck_require__(186));
 const tc = __importStar(__nccwpck_require__(784));
 const exec = __importStar(__nccwpck_require__(514));
 const path_1 = __nccwpck_require__(622);
-const version = '0.0.1';
+const version = '0.0.2';
 let silicon = false;
 let arch = '';
 function needsArmFlag() {
@@ -67,7 +67,7 @@ function get() {
             core.info(`Found in cache @ ${toolPath}`);
             return toolPath;
         }
-        const url = `https://core.pakket.sh/pakket-builder/pakket-builder-${arch}-${version}.tar.xz`;
+        const url = `https://core.pakket.sh/pakket-builder/${version}/pakket-builder-${arch}-${version}.tar.xz`;
         core.info(`Downloading ${arch} version of pakket-builder from ${url}`);
         const downloadPath = yield tc.downloadTool(url);
         const dest = yield tc.extractTar(downloadPath);
