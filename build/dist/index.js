@@ -109,7 +109,7 @@ function run() {
                     pkg = pathRegex[2];
                     version = pathRegex[3];
                     const outputDir = path_1.join(GH_WORKSPACE, 'temp', `${pkg}-${version}`);
-                    yield exec('sudo', [
+                    const buildOutput = yield exec('sudo', [
                         'pakket-builder',
                         'build',
                         path_1.join(GH_WORKSPACE, 'packages', pkg),
@@ -117,6 +117,14 @@ function run() {
                         '-o',
                         outputDir
                     ]);
+                    let checksum = '';
+                    const stdout = buildOutput.stdout.split('\n');
+                    for (const line of stdout) {
+                        const regex = new RegExp(/checksum: ([A-Fa-f0-9]{64})/g).exec(line);
+                        if (regex) {
+                            checksum = regex[1];
+                        }
+                    }
                     let arch = '';
                     if (silicon) {
                         arch = 'silicon';
@@ -134,15 +142,30 @@ function run() {
                     catch (err) {
                         core.setFailed('Failed to upload the package to the mirror');
                     }
-                    yield git.addConfig('user.email', 'bot@pakket.sh');
-                    yield git.addConfig('user.name', 'Pakket Bot');
-                    yield git.fetch();
-                    yield git.pull();
-                    yield git.add('./packages');
-                    yield git.commit(`Add checksum for ${pkg} (${version}, ${arch})`);
-                    yield git.pull();
-                    yield git.push();
-                    core.info('Pushed checksum to repository');
+                    try {
+                        yield git.addConfig('user.email', 'bot@pakket.sh');
+                        yield git.addConfig('user.name', 'Pakket Bot');
+                        yield git.add('./packages');
+                        yield git.commit(`Add checksum for ${pkg} (${version}, ${arch})`);
+                        yield git.pull();
+                        yield git.push();
+                        core.info('Pushed checksum to repository');
+                    }
+                    catch (err) {
+                        yield octokit.rest.issues.createComment({
+                            body: `Uploading ${arch} checksum failed.\nChecksum: ${checksum}`,
+                            issue_number: PR,
+                            owner: 'pakket-project',
+                            repo: 'core'
+                        });
+                        core.setFailed('Failed to push checksum to repository');
+                    }
+                    yield octokit.rest.issues.createComment({
+                        body: `Successfully packaged and uploaded ${pkg} to the mirror.`,
+                        issue_number: PR,
+                        owner: 'pakket-project',
+                        repo: 'core'
+                    });
                 }
             }
         }

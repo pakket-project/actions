@@ -87,7 +87,7 @@ async function run(): Promise<void> {
 
         const outputDir = join(GH_WORKSPACE, 'temp', `${pkg}-${version}`)
 
-        await exec('sudo', [
+        const buildOutput = await exec('sudo', [
           'pakket-builder',
           'build',
           join(GH_WORKSPACE, 'packages', pkg),
@@ -95,6 +95,15 @@ async function run(): Promise<void> {
           '-o',
           outputDir
         ])
+
+        let checksum = ''
+        const stdout = buildOutput.stdout.split('\n')
+        for (const line of stdout) {
+          const regex = new RegExp(/checksum: ([A-Fa-f0-9]{64})/g).exec(line)
+          if (regex) {
+            checksum = regex[1]
+          }
+        }
 
         let arch = ''
         if (silicon) {
@@ -120,16 +129,31 @@ async function run(): Promise<void> {
           core.setFailed('Failed to upload the package to the mirror')
         }
 
-        await git.addConfig('user.email', 'bot@pakket.sh')
-        await git.addConfig('user.name', 'Pakket Bot')
+        try {
+          await git.addConfig('user.email', 'bot@pakket.sh')
+          await git.addConfig('user.name', 'Pakket Bot')
 
-        await git.fetch()
-        await git.pull()
-        await git.add('./packages')
-        await git.commit(`Add checksum for ${pkg} (${version}, ${arch})`)
-        await git.pull()
-        await git.push()
-        core.info('Pushed checksum to repository')
+          await git.add('./packages')
+          await git.commit(`Add checksum for ${pkg} (${version}, ${arch})`)
+          await git.pull()
+          await git.push()
+          core.info('Pushed checksum to repository')
+        } catch (err) {
+          await octokit.rest.issues.createComment({
+            body: `Uploading ${arch} checksum failed.\nChecksum: ${checksum}`,
+            issue_number: (PR as unknown) as number,
+            owner: 'pakket-project',
+            repo: 'core'
+          })
+          core.setFailed('Failed to push checksum to repository')
+        }
+
+        await octokit.rest.issues.createComment({
+          body: `Successfully packaged and uploaded ${pkg} to the mirror.`,
+          issue_number: (PR as unknown) as number,
+          owner: 'pakket-project',
+          repo: 'core'
+        })
       }
     }
   } catch (error: any) {
