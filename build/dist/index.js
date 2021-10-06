@@ -145,6 +145,7 @@ function run() {
                     try {
                         yield git.addConfig('user.email', 'bot@pakket.sh');
                         yield git.addConfig('user.name', 'Pakket Bot');
+                        yield git.addConfig('pull.rebase', 'true');
                         yield git.add('./packages');
                         yield git.commit(`Add checksum for ${pkg} (${version}, ${arch})`);
                         yield git.pull();

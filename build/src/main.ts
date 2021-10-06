@@ -132,6 +132,7 @@ async function run(): Promise<void> {
         try {
           await git.addConfig('user.email', 'bot@pakket.sh')
           await git.addConfig('user.name', 'Pakket Bot')
+          await git.addConfig('pull.rebase', 'true')
 
           await git.add('./packages')
           await git.commit(`Add checksum for ${pkg} (${version}, ${arch})`)
