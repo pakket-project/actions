@@ -1,6 +1,10 @@
 name: 'Setup pakket-builder'
 description: 'Install pakket-builder'
 author: 'pakket-project'
+inputs:
+  version:
+    description: 'pakket-builder version'
+
 runs:
   using: 'node12'
   main: 'dist/index.js'
