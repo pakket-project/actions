@@ -55,15 +55,23 @@ async function run(): Promise<void> {
     })
 
     const branch = pull.data.head.ref
+    const fork = pull.data.head.repo?.fork
 
-    await exec('git', ['fetch', 'origin', `${branch}:${branch}`])
-    await exec('git', ['config', `branch.${branch}.remote`, 'origin'])
-    await exec('git', [
-      'config',
-      `branch.${branch}.merge`,
-      `refs/heads/${branch}`
-    ])
-    await exec('git', ['checkout', branch])
+    if (fork === true) {
+      await git.remote([
+        'add',
+        'fork',
+        pull.data.head.repo?.clone_url as string
+      ])
+      await git.fetch('fork')
+      await git.checkout(`fork/${branch}`, ['--track'])
+    } else {
+      await git.fetch('origin', `${branch}:${branch}`)
+      await git.addConfig(`branch.${branch}.remote`, 'origin')
+      await git.addConfig(`branch.${branch}.merge`, `refs/heads/${branch}`)
+      await git.checkout(branch)
+    }
+
     core.info(`Checked out ${pull.data.head.ref} (PR #${PR})`)
 
     const {data: files} = await octokit.rest.pulls.listFiles({
@@ -74,7 +82,6 @@ async function run(): Promise<void> {
 
     let pkg = ''
     let version = ''
-    // let checksum = ''
 
     for (const f of files) {
       const pathRegex = new RegExp(

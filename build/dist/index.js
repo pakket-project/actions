@@ -72,6 +72,7 @@ function exec(command, args) {
     });
 }
 function run() {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         silicon = yield needsArmFlag();
         try {
@@ -86,14 +87,22 @@ function run() {
                 pull_number: PR
             });
             const branch = pull.data.head.ref;
-            yield exec('git', ['fetch', 'origin', `${branch}:${branch}`]);
-            yield exec('git', ['config', `branch.${branch}.remote`, 'origin']);
-            yield exec('git', [
-                'config',
-                `branch.${branch}.merge`,
-                `refs/heads/${branch}`
-            ]);
-            yield exec('git', ['checkout', branch]);
+            const fork = (_a = pull.data.head.repo) === null || _a === void 0 ? void 0 : _a.fork;
+            if (fork === true) {
+                yield git.remote([
+                    'add',
+                    'fork',
+                    (_b = pull.data.head.repo) === null || _b === void 0 ? void 0 : _b.clone_url
+                ]);
+                yield git.fetch('fork');
+                yield git.checkout(`fork/${branch}`, ['--track']);
+            }
+            else {
+                yield git.fetch('origin', `${branch}:${branch}`);
+                yield git.addConfig(`branch.${branch}.remote`, 'origin');
+                yield git.addConfig(`branch.${branch}.merge`, `refs/heads/${branch}`);
+                yield git.checkout(branch);
+            }
             core.info(`Checked out ${pull.data.head.ref} (PR #${PR})`);
             const { data: files } = yield octokit.rest.pulls.listFiles({
                 owner: 'pakket-project',
@@ -102,7 +111,6 @@ function run() {
             });
             let pkg = '';
             let version = '';
-            // let checksum = ''
             for (const f of files) {
                 const pathRegex = new RegExp(/(packages\/)([^/]*)\/([^/]*)\/([^\n]*)/g).exec(f.filename);
                 if (pathRegex && pkg === '' && version === '') {
