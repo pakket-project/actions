@@ -55,25 +55,27 @@ async function run(): Promise<void> {
 
     const octokit = github.getOctokit(core.getInput('GH_TOKEN'))
 
-    const pull = await octokit.rest.pulls.get({
-      owner: 'pakket-project',
-      repo: repository,
-      pull_number: (PR as unknown) as number
-    })
-
-    const branch = pull.data.head.ref
-    const fork = pull.data.head.repo?.fork
+    let pull
 
     const files = []
 
     if (PR) {
+      pull = await octokit.rest.pulls.get({
+        owner: 'pakket-project',
+        repo: repository,
+        pull_number: (PR as unknown) as number
+      })
+
+      const branch = pull.data.head.ref
+      const fork = pull.data.head.repo?.fork
+
       if (fork === true) {
         await git.remote([
           'add',
           'fork',
           pull.data.head.repo?.clone_url as string
         ])
-        await git.fetch('fork')
+        await git.fetch('fork', ['--all'])
         await git.checkout(`fork/${branch}`, ['--track'])
       } else {
         await git.fetch('origin', `${branch}:${branch}`)
@@ -164,21 +166,25 @@ async function run(): Promise<void> {
           await git.push()
           core.info('Pushed checksum to repository')
         } catch (err) {
+          if (PR) {
+            await octokit.rest.issues.createComment({
+              body: `Uploading ${arch} checksum failed.\nChecksum: ${checksum}`,
+              issue_number: (PR as unknown) as number,
+              owner: 'pakket-project',
+              repo: 'core'
+            })
+          }
+          core.setFailed('Failed to push checksum to repository')
+        }
+
+        if (PR) {
           await octokit.rest.issues.createComment({
-            body: `Uploading ${arch} checksum failed.\nChecksum: ${checksum}`,
+            body: `Successfully packaged and uploaded ${pkg} (for ${arch}) to the mirror.`,
             issue_number: (PR as unknown) as number,
             owner: 'pakket-project',
             repo: 'core'
           })
-          core.setFailed('Failed to push checksum to repository')
         }
-
-        await octokit.rest.issues.createComment({
-          body: `Successfully packaged and uploaded ${pkg} (for ${arch}) to the mirror.`,
-          issue_number: (PR as unknown) as number,
-          owner: 'pakket-project',
-          repo: 'core'
-        })
       }
     }
   } catch (error: any) {

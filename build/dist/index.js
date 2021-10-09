@@ -87,22 +87,23 @@ function run() {
             }
             process.env.HOME = GH_WORKSPACE;
             const octokit = github.getOctokit(core.getInput('GH_TOKEN'));
-            const pull = yield octokit.rest.pulls.get({
-                owner: 'pakket-project',
-                repo: repository,
-                pull_number: PR
-            });
-            const branch = pull.data.head.ref;
-            const fork = (_a = pull.data.head.repo) === null || _a === void 0 ? void 0 : _a.fork;
+            let pull;
             const files = [];
             if (PR) {
+                pull = yield octokit.rest.pulls.get({
+                    owner: 'pakket-project',
+                    repo: repository,
+                    pull_number: PR
+                });
+                const branch = pull.data.head.ref;
+                const fork = (_a = pull.data.head.repo) === null || _a === void 0 ? void 0 : _a.fork;
                 if (fork === true) {
                     yield git.remote([
                         'add',
                         'fork',
                         (_b = pull.data.head.repo) === null || _b === void 0 ? void 0 : _b.clone_url
                     ]);
-                    yield git.fetch('fork');
+                    yield git.fetch('fork', ['--all']);
                     yield git.checkout(`fork/${branch}`, ['--track']);
                 }
                 else {
@@ -176,20 +177,24 @@ function run() {
                         core.info('Pushed checksum to repository');
                     }
                     catch (err) {
+                        if (PR) {
+                            yield octokit.rest.issues.createComment({
+                                body: `Uploading ${arch} checksum failed.\nChecksum: ${checksum}`,
+                                issue_number: PR,
+                                owner: 'pakket-project',
+                                repo: 'core'
+                            });
+                        }
+                        core.setFailed('Failed to push checksum to repository');
+                    }
+                    if (PR) {
                         yield octokit.rest.issues.createComment({
-                            body: `Uploading ${arch} checksum failed.\nChecksum: ${checksum}`,
+                            body: `Successfully packaged and uploaded ${pkg} (for ${arch}) to the mirror.`,
                             issue_number: PR,
                             owner: 'pakket-project',
                             repo: 'core'
                         });
-                        core.setFailed('Failed to push checksum to repository');
                     }
-                    yield octokit.rest.issues.createComment({
-                        body: `Successfully packaged and uploaded ${pkg} (for ${arch}) to the mirror.`,
-                        issue_number: PR,
-                        owner: 'pakket-project',
-                        repo: 'core'
-                    });
                 }
             }
         }
