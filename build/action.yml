@@ -4,7 +4,13 @@ author: 'pakket-project'
 inputs:
   PR:
     description: 'PR number'
-    required: true
+    required: false
+  package:
+    description: 'Package name (if not PR)'
+    required: false
+  version:
+    description: 'Package version (if not PR)'
+    required: false
   GH_TOKEN:
     required: true
 

@@ -39,10 +39,17 @@ async function run(): Promise<void> {
   silicon = await needsArmFlag()
 
   try {
-    const PR = core.getInput('PR', {required: true})
+    const PR = core.getInput('PR', {required: false})
 
     const GH_WORKSPACE = process.env.GITHUB_WORKSPACE as string
     const repository = 'core'
+
+    let pkgName = ''
+    let pkgVersion = ''
+    if (!PR) {
+      pkgName = core.getInput('package', {required: false})
+      pkgVersion = core.getInput('version', {required: false})
+    }
 
     process.env.HOME = GH_WORKSPACE
 
@@ -57,28 +64,38 @@ async function run(): Promise<void> {
     const branch = pull.data.head.ref
     const fork = pull.data.head.repo?.fork
 
-    if (fork === true) {
-      await git.remote([
-        'add',
-        'fork',
-        pull.data.head.repo?.clone_url as string
-      ])
-      await git.fetch('fork')
-      await git.checkout(`fork/${branch}`, ['--track'])
+    const files = []
+
+    if (PR) {
+      if (fork === true) {
+        await git.remote([
+          'add',
+          'fork',
+          pull.data.head.repo?.clone_url as string
+        ])
+        await git.fetch('fork')
+        await git.checkout(`fork/${branch}`, ['--track'])
+      } else {
+        await git.fetch('origin', `${branch}:${branch}`)
+        await git.addConfig(`branch.${branch}.remote`, 'origin')
+        await git.addConfig(`branch.${branch}.merge`, `refs/heads/${branch}`)
+        await git.checkout(branch)
+      }
+
+      core.info(`Checked out ${pull.data.head.ref} (PR #${PR})`)
+
+      const pullFiles = await octokit.rest.pulls.listFiles({
+        owner: 'pakket-project',
+        pull_number: (PR as unknown) as number,
+        repo: repository
+      })
+
+      for (const file of pullFiles.data) {
+        files.push(file.filename)
+      }
     } else {
-      await git.fetch('origin', `${branch}:${branch}`)
-      await git.addConfig(`branch.${branch}.remote`, 'origin')
-      await git.addConfig(`branch.${branch}.merge`, `refs/heads/${branch}`)
-      await git.checkout(branch)
+      files.push(join('packages', pkgName, pkgVersion, 'package'))
     }
-
-    core.info(`Checked out ${pull.data.head.ref} (PR #${PR})`)
-
-    const {data: files} = await octokit.rest.pulls.listFiles({
-      owner: 'pakket-project',
-      pull_number: (PR as unknown) as number,
-      repo: repository
-    })
 
     let pkg = ''
     let version = ''
@@ -86,7 +103,7 @@ async function run(): Promise<void> {
     for (const f of files) {
       const pathRegex = new RegExp(
         /(packages\/)([^/]*)\/([^/]*)\/([^\n]*)/g
-      ).exec(f.filename)
+      ).exec(f)
 
       if (pathRegex && pkg === '' && version === '') {
         pkg = pathRegex[2]
