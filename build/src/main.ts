@@ -153,6 +153,7 @@ async function run(): Promise<void> {
           core.info('Uploaded package to mirror')
         } catch (err) {
           core.setFailed('Failed to upload the package to the mirror')
+          process.exit(1)
         }
 
         try {
@@ -175,6 +176,7 @@ async function run(): Promise<void> {
             })
           }
           core.setFailed('Failed to push checksum to repository')
+          process.exit(1)
         }
 
         if (PR) {
@@ -189,6 +191,7 @@ async function run(): Promise<void> {
     }
   } catch (error: any) {
     core.setFailed(error.message)
+    process.exit(1)
   }
 }
 
