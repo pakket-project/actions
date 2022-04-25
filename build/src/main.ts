@@ -139,13 +139,7 @@ async function run(): Promise<void> {
         }
 
         const tarPath = join(outputDir, pkg, `${pkg}-${version}-${arch}.tar.xz`)
-        const destDir = join(
-          'containers',
-          'caddy',
-          'core-packages',
-          pkg,
-          version
-        )
+        const destDir = join('packages', 'core', pkg, version)
 
         try {
           await exec('ssh', ['mirror', 'mkdir', '-p', destDir])
