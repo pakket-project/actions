@@ -50,9 +50,9 @@ async function run(): Promise<void> {
     silicon = await needsArmFlag()
 
     if (!silicon) {
-      arch = 'intel'
+      arch = 'amd64'
     } else {
-      arch = 'silicon'
+      arch = 'arm64'
     }
 
     // get pakket-builder

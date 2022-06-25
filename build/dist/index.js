@@ -151,10 +151,10 @@ function run() {
                     }
                     let arch = '';
                     if (silicon) {
-                        arch = 'silicon';
+                        arch = 'arm64';
                     }
                     else {
-                        arch = 'intel';
+                        arch = 'amd64';
                     }
                     const tarPath = path_1.join(outputDir, pkg, `${pkg}-${version}-${arch}.tar.xz`);
                     const destDir = path_1.join('packages', 'core', pkg, version);
@@ -5761,7 +5761,7 @@ function setup(env) {
 
 	/**
 	* Selects a color for a debug namespace
-	* @param {String} namespace The namespace string for the for the debug instance to be colored
+	* @param {String} namespace The namespace string for the debug instance to be colored
 	* @return {Number|String} An ANSI color code for the given namespace
 	* @api private
 	*/
@@ -5906,7 +5906,7 @@ function setup(env) {
 			namespaces = split[i].replace(/\*/g, '.*?');
 
 			if (namespaces[0] === '-') {
-				createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+				createDebug.skips.push(new RegExp('^' + namespaces.slice(1) + '$'));
 			} else {
 				createDebug.names.push(new RegExp('^' + namespaces + '$'));
 			}

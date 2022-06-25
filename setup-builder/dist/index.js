@@ -82,10 +82,10 @@ function run() {
         try {
             silicon = yield needsArmFlag();
             if (!silicon) {
-                arch = 'intel';
+                arch = 'amd64';
             }
             else {
-                arch = 'silicon';
+                arch = 'arm64';
             }
             // get pakket-builder
             const path = yield get();

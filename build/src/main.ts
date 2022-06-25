@@ -133,9 +133,9 @@ async function run(): Promise<void> {
 
         let arch = ''
         if (silicon) {
-          arch = 'silicon'
+          arch = 'arm64'
         } else {
-          arch = 'intel'
+          arch = 'amd64'
         }
 
         const tarPath = join(outputDir, pkg, `${pkg}-${version}-${arch}.tar.xz`)
